@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, User, Play } from 'lucide-react';
+import { Search, Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthModal from './AuthModal';
+import Logo from './Logo';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,14 +31,7 @@ const Navbar = () => {
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Play className="w-5 h-5 text-primary-foreground fill-current" />
-            </div>
-            <span className="text-2xl font-bold font-display tracking-wider text-foreground hidden sm:block">
-              SARMAX
-            </span>
-          </Link>
+          <Logo showText={true} />
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-6">
