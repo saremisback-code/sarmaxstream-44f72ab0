@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { Play, Mail, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Mail, Twitter, Instagram, Youtube } from 'lucide-react';
+import Logo from './Logo';
 
 const Footer = () => {
   const footerLinks = {
@@ -14,14 +14,9 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Play className="w-5 h-5 text-primary-foreground fill-current" />
-              </div>
-              <span className="text-2xl font-bold font-display tracking-wider">
-                SARMAX
-              </span>
-            </Link>
+            <div className="mb-4">
+              <Logo showText={true} />
+            </div>
             <p className="text-muted-foreground text-sm mb-6">
               Your ultimate destination for free movies and TV shows. Stream unlimited content anytime, anywhere.
             </p>
