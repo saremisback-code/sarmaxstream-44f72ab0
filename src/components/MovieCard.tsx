@@ -21,7 +21,7 @@ const MovieCard = ({ movie, index = 0 }: MovieCardProps) => {
   return (
     <Link 
       to={`/watch/${mediaType}/${movie.id}`}
-      className="movie-card block"
+      className="movie-card group block"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="relative aspect-[2/3] bg-secondary overflow-hidden rounded-xl">
