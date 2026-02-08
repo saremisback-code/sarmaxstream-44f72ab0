@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -8,21 +8,19 @@ import {
   Calendar, 
   ArrowLeft, 
   Plus, 
-  Share2, 
-  Download,
-  ChevronDown,
-  Server
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { fetchMovieDetails, getImageUrl, MovieDetails } from '@/lib/tmdb';
+import { fetchMovieDetails, getImageUrl } from '@/lib/tmdb';
 import { Button } from '@/components/ui/button';
 
 const WatchPage = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
-  const [selectedServer, setSelectedServer] = useState(0);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
+  const [streamError, setStreamError] = useState(false);
 
   const { data: movie, isLoading } = useQuery({
     queryKey: ['movie', type, id],
@@ -30,21 +28,18 @@ const WatchPage = () => {
     enabled: !!id,
   });
 
-  // Verified working ad-free servers
-  const servers = [
-    { name: 'Server 1', url: `https://vidsrc.icu/embed/${type}/${id}` },
-    { name: 'Server 2', url: `https://vidsrc.xyz/embed/${type}?tmdb=${id}` },
-    { name: 'Server 3', url: `https://www.2embed.cc/embed/${id}` },
-    { name: 'Server 4', url: `https://multiembed.mov/?video_id=${id}&tmdb=1` },
-  ];
-
+  // Auto-select best working server - using vidsrc.to as primary
   const getStreamUrl = () => {
-    const baseUrl = servers[selectedServer].url;
     if (type === 'tv') {
-      return `${baseUrl}?s=${selectedSeason}&e=${selectedEpisode}`;
+      return `https://vidsrc.to/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`;
     }
-    return baseUrl;
+    return `https://vidsrc.to/embed/movie/${id}`;
   };
+
+  // Reset error on content change
+  useEffect(() => {
+    setStreamError(false);
+  }, [id, selectedSeason, selectedEpisode]);
 
   if (isLoading) {
     return (
@@ -90,7 +85,7 @@ const WatchPage = () => {
             <img
               src={backdropUrl}
               alt={title}
-              className="w-full h-full object-cover opacity-20"
+              className="w-full h-full object-cover opacity-15"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
           </div>
@@ -108,78 +103,74 @@ const WatchPage = () => {
 
           {/* Video Player */}
           <div className="glass-card overflow-hidden mb-8">
-            <div className="aspect-video bg-black relative">
-              <iframe
-                src={getStreamUrl()}
-                className="w-full h-full"
-                allowFullScreen
-                allow="autoplay; encrypted-media"
-                title={title}
-              />
-            </div>
-
-            {/* Server Selection */}
-            <div className="p-4 border-t border-white/5">
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Server className="w-4 h-4" />
-                  Select Server:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {servers.map((server, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedServer(index)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedServer === index
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
+            <div className="aspect-video bg-card relative">
+              {streamError ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                  <AlertCircle className="w-16 h-16 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Stream Unavailable</h3>
+                  <p className="text-muted-foreground mb-4">This content is currently unavailable. Please try again later.</p>
+                  {trailer && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${trailer.key}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      {server.name}
-                    </button>
-                  ))}
+                      <Button className="btn-primary gap-2">
+                        <Play className="w-4 h-4" />
+                        Watch Trailer Instead
+                      </Button>
+                    </a>
+                  )}
                 </div>
-              </div>
-
-              {/* Episode Selection for TV Shows */}
-              {type === 'tv' && movie.number_of_seasons && (
-                <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Season:</span>
-                    <select
-                      value={selectedSeason}
-                      onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                      className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm"
-                    >
-                      {Array.from({ length: movie.number_of_seasons }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          Season {i + 1}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Episode:</span>
-                    <select
-                      value={selectedEpisode}
-                      onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                      className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm"
-                    >
-                      {Array.from({ length: 20 }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          Episode {i + 1}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              ) : (
+                <iframe
+                  src={getStreamUrl()}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media; fullscreen"
+                  title={title}
+                  onError={() => setStreamError(true)}
+                />
               )}
             </div>
+
+            {/* Episode Selection for TV Shows */}
+            {type === 'tv' && movie.number_of_seasons && (
+              <div className="p-4 border-t border-white/5 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Season:</span>
+                  <select
+                    value={selectedSeason}
+                    onChange={(e) => setSelectedSeason(Number(e.target.value))}
+                    className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
+                  >
+                    {Array.from({ length: movie.number_of_seasons }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        Season {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Episode:</span>
+                  <select
+                    value={selectedEpisode}
+                    onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+                    className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
+                  >
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        Episode {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Movie Info */}
-          <div className="grid lg:grid-cols-[300px_1fr] gap-8 pb-12">
+          <div className="grid lg:grid-cols-[280px_1fr] gap-8 pb-12">
             {/* Poster */}
             <div className="hidden lg:block">
               {posterUrl ? (
@@ -197,7 +188,7 @@ const WatchPage = () => {
 
             {/* Details */}
             <div>
-              <h1 className="text-3xl md:text-5xl font-bold font-display tracking-wider mb-4 text-foreground">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">
                 {title}
               </h1>
 
@@ -210,25 +201,25 @@ const WatchPage = () => {
               {/* Meta Info */}
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 {rating && rating !== '0.0' && (
-                  <span className="flex items-center gap-1.5 bg-accent/20 text-accent px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-primary/20 text-primary px-3 py-1.5 rounded-full text-sm font-medium">
                     <Star className="w-4 h-4 fill-current" />
-                    <span className="font-semibold">{rating}</span>
+                    {rating}
                   </span>
                 )}
                 {releaseYear && (
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
                     <Calendar className="w-4 h-4" />
                     {releaseYear}
                   </span>
                 )}
                 {runtime && (
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
                     <Clock className="w-4 h-4" />
                     {runtime}
                   </span>
                 )}
                 {type === 'tv' && movie.number_of_seasons && (
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground text-sm">
                     {movie.number_of_seasons} Season{movie.number_of_seasons > 1 ? 's' : ''}
                   </span>
                 )}
@@ -249,15 +240,15 @@ const WatchPage = () => {
               )}
 
               {/* Overview */}
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+              <p className="text-muted-foreground leading-relaxed mb-8">
                 {movie.overview}
               </p>
 
               {/* Actions */}
-              <div className="flex flex-wrap gap-4 mb-8">
+              <div className="flex flex-wrap gap-3 mb-8">
                 <Button className="btn-secondary gap-2">
                   <Plus className="w-4 h-4" />
-                  Add to Watchlist
+                  Add to List
                 </Button>
                 <Button className="btn-secondary gap-2">
                   <Share2 className="w-4 h-4" />
@@ -271,7 +262,7 @@ const WatchPage = () => {
                   >
                     <Button className="btn-secondary gap-2">
                       <Play className="w-4 h-4" />
-                      Watch Trailer
+                      Trailer
                     </Button>
                   </a>
                 )}
@@ -280,25 +271,22 @@ const WatchPage = () => {
               {/* Cast */}
               {movie.credits?.cast && movie.credits.cast.length > 0 && (
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground mb-4">Top Cast</h3>
-                  <div className="flex flex-wrap gap-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Cast</h3>
+                  <div className="flex flex-wrap gap-3">
                     {movie.credits.cast.slice(0, 6).map((actor) => (
-                      <div key={actor.id} className="flex items-center gap-3">
+                      <div key={actor.id} className="flex items-center gap-2 bg-secondary/50 rounded-full pr-4">
                         {actor.profile_path ? (
                           <img
                             src={getImageUrl(actor.profile_path, 'w200')!}
                             alt={actor.name}
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-10 h-10 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground text-sm">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-sm font-medium">
                             {actor.name.charAt(0)}
                           </div>
                         )}
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{actor.name}</p>
-                          <p className="text-xs text-muted-foreground">{actor.character}</p>
-                        </div>
+                        <span className="text-sm text-foreground">{actor.name}</span>
                       </div>
                     ))}
                   </div>
