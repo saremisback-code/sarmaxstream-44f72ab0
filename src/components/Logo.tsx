@@ -7,40 +7,79 @@ interface LogoProps {
 
 const Logo = ({ className = '', showText = true }: LogoProps) => {
   return (
-    <Link to="/" className={`flex items-center gap-3 ${className}`}>
-      {/* Custom Sarmax Logo */}
-      <div className="relative w-11 h-11">
-        {/* Outer glow */}
-        <div className="absolute inset-0 bg-primary/30 rounded-xl blur-md" />
+    <Link to="/" className={`flex items-center gap-3 group ${className}`}>
+      {/* Modern Sarmax Logo */}
+      <div className="relative w-12 h-12">
+        {/* Animated glow ring */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary via-red-400 to-primary rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
         
-        {/* Main logo container */}
-        <div className="relative w-full h-full bg-gradient-to-br from-primary via-red-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-          {/* S letter stylized */}
-          <svg 
-            viewBox="0 0 24 24" 
-            className="w-7 h-7 text-white"
-            fill="currentColor"
-          >
-            <path d="M12 2C9.5 2 7.5 3.5 7.5 5.5C7.5 7.5 9 8.5 11.5 9.5C14 10.5 16.5 11.5 16.5 14.5C16.5 17.5 14 19 11.5 19C9 19 7 17.5 6 15.5L4 17C5.5 19.5 8.5 21 12 21C15 21 18.5 19 18.5 14.5C18.5 10 15.5 9 13 8C10.5 7 9.5 6.5 9.5 5.5C9.5 4.5 10.5 4 12 4C13.5 4 14.5 4.5 15.5 5.5L17 4C15.5 2.5 14 2 12 2Z" />
+        {/* Main hexagonal container */}
+        <div className="relative w-full h-full">
+          {/* Hexagon background */}
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+            <defs>
+              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(0, 85%, 55%)" />
+                <stop offset="50%" stopColor="hsl(0, 75%, 45%)" />
+                <stop offset="100%" stopColor="hsl(0, 90%, 35%)" />
+              </linearGradient>
+              <linearGradient id="innerGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            
+            {/* Outer hexagon */}
+            <polygon 
+              points="50,2 95,25 95,75 50,98 5,75 5,25" 
+              fill="url(#logoGradient)"
+              className="drop-shadow-lg"
+            />
+            
+            {/* Inner shine */}
+            <polygon 
+              points="50,8 88,28 88,72 50,92 12,72 12,28" 
+              fill="url(#innerGlow)"
+            />
+            
+            {/* S letter - modern geometric */}
+            <g transform="translate(25, 20)">
+              <path 
+                d="M25 5 L40 5 Q50 5 50 15 Q50 25 40 25 L20 25 Q10 25 10 35 Q10 45 20 45 L35 45 L35 40 L20 40 Q15 40 15 35 Q15 30 20 30 L40 30 Q50 30 50 20 Q50 10 40 10 L25 10 Z"
+                fill="white"
+                className="drop-shadow-sm"
+              />
+            </g>
+            
+            {/* Play triangle accent */}
+            <g transform="translate(60, 55)">
+              <polygon 
+                points="0,0 20,12 0,24" 
+                fill="white"
+                opacity="0.9"
+              />
+            </g>
           </svg>
-          
-          {/* Play accent */}
-          <div className="absolute -right-0.5 -bottom-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md">
-            <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-primary ml-0.5" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
         </div>
       </div>
       
       {showText && (
         <div className="flex flex-col">
-          <span className="text-2xl font-bold font-display tracking-[0.2em] text-foreground leading-none">
-            SARMAX
-          </span>
-          <span className="text-[10px] text-primary font-medium tracking-widest">
-            STREAM FREE
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-black tracking-tight text-foreground leading-none group-hover:text-primary transition-colors duration-300">
+              SAR
+            </span>
+            <span className="text-2xl font-black tracking-tight text-primary leading-none">
+              MAX
+            </span>
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <div className="w-2 h-0.5 bg-primary rounded-full" />
+            <span className="text-[9px] text-muted-foreground font-semibold tracking-[0.3em] uppercase">
+              Stream Free
+            </span>
+            <div className="w-2 h-0.5 bg-primary rounded-full" />
+          </div>
         </div>
       )}
     </Link>
