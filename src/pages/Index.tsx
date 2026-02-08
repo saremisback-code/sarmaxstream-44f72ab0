@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import MovieRow from '@/components/MovieRow';
+import NewReleasesSection from '@/components/NewReleasesSection';
 import Footer from '@/components/Footer';
 import { 
   fetchTrending, 
@@ -10,6 +11,8 @@ import {
   fetchTopRated, 
   fetchPopularTV, 
   fetchUpcoming,
+  fetchNowPlaying,
+  fetchAiringToday,
   genres,
   fetchByGenre
 } from '@/lib/tmdb';
@@ -40,6 +43,16 @@ const Index = () => {
   const { data: upcoming = [] } = useQuery({
     queryKey: ['upcoming'],
     queryFn: fetchUpcoming,
+  });
+
+  const { data: nowPlaying = [] } = useQuery({
+    queryKey: ['nowPlaying'],
+    queryFn: fetchNowPlaying,
+  });
+
+  const { data: airingToday = [] } = useQuery({
+    queryKey: ['airingToday'],
+    queryFn: fetchAiringToday,
   });
 
   const { data: genreMovies = [] } = useQuery({
@@ -91,8 +104,12 @@ const Index = () => {
       {/* Content Rows */}
       {!selectedGenre && (
         <>
+          {/* New Releases Section - Featured */}
+          <NewReleasesSection movies={nowPlaying} />
+          
           <MovieRow title="Trending Now" movies={trending} />
           <MovieRow title="Popular Movies" movies={popular} />
+          <MovieRow title="Airing Today" movies={airingToday} />
           <MovieRow title="Top Rated" movies={topRated} />
           <MovieRow title="Popular TV Shows" movies={tvShows} />
           <MovieRow title="Coming Soon" movies={upcoming} />
