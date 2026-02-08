@@ -30,11 +30,12 @@ const WatchPage = () => {
     enabled: !!id,
   });
 
+  // Verified working ad-free servers
   const servers = [
-    { name: 'VidSrc Pro', url: `https://vidsrc.pro/embed/${type}/${id}` },
-    { name: 'VidSrc To', url: `https://vidsrc.to/embed/${type}/${id}` },
-    { name: 'VidSrc CC', url: `https://vidsrc.cc/v2/embed/${type}/${id}` },
-    { name: 'Embed SU', url: `https://vidsrc.su/embed/${type}/${id}` },
+    { name: 'Server 1', url: `https://vidsrc.icu/embed/${type}/${id}` },
+    { name: 'Server 2', url: `https://vidsrc.xyz/embed/${type}?tmdb=${id}` },
+    { name: 'Server 3', url: `https://www.2embed.cc/embed/${id}` },
+    { name: 'Server 4', url: `https://multiembed.mov/?video_id=${id}&tmdb=1` },
   ];
 
   const getStreamUrl = () => {
