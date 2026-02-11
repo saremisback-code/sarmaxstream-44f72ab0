@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { fetchTrending, getImageUrl } from '@/lib/tmdb';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -9,31 +12,87 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
+  const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { data: trending = [] } = useQuery({
+    queryKey: ['trending'],
+    queryFn: fetchTrending,
+  });
+
+  // Get backdrop images for the scrolling background
+  const backdropImages = trending
+    .filter(m => m.backdrop_path)
+    .slice(0, 12)
+    .map(m => getImageUrl(m.backdrop_path, 'w780'));
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo functionality - in production, this would connect to auth backend
-    toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
-    onClose();
-    setFormData({ name: '', email: '', password: '' });
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          setError(error);
+          toast.error(error);
+        } else {
+          toast.success('Welcome back!');
+          onClose();
+          setFormData({ name: '', email: '', password: '' });
+        }
+      } else {
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters');
+          setIsSubmitting(false);
+          return;
+        }
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (error) {
+          setError(error);
+          toast.error(error);
+        } else {
+          toast.success('Check your email to verify your account!');
+          onClose();
+          setFormData({ name: '', email: '', password: '' });
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      {/* Backdrop with movie posters */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Scrolling movie posters background */}
+      <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
+        <div className="grid grid-cols-4 md:grid-cols-6 gap-1 animate-scroll-slow">
+          {[...backdropImages, ...backdropImages].map((url, i) => (
+            url && (
+              <img
+                key={i}
+                src={url}
+                alt=""
+                className="w-full aspect-video object-cover rounded"
+              />
+            )
+          ))}
+        </div>
+      </div>
       
       {/* Modal */}
       <div className="relative w-full max-w-md glass-card p-8 animate-scale-in">
@@ -54,6 +113,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               : 'Create an account to start watching'}
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
@@ -91,6 +156,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="search-input w-full pl-12 pr-12 rounded-lg"
               required
+              minLength={6}
             />
             <button
               type="button"
@@ -101,16 +167,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </button>
           </div>
 
-          {isLogin && (
-            <div className="text-right">
-              <button type="button" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </button>
-            </div>
-          )}
-
-          <Button type="submit" className="btn-primary w-full text-lg py-6">
-            {isLogin ? 'Sign In' : 'Create Account'}
+          <Button type="submit" className="btn-primary w-full text-lg py-6" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              isLogin ? 'Sign In' : 'Create Account'
+            )}
           </Button>
         </form>
 
@@ -118,7 +180,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           <p className="text-muted-foreground">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => { setIsLogin(!isLogin); setError(null); }}
               className="text-primary hover:underline font-medium"
             >
               {isLogin ? 'Sign Up' : 'Sign In'}
