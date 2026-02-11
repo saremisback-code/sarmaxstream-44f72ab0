@@ -1,26 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Play, 
-  Star, 
-  Clock, 
-  Calendar, 
-  ArrowLeft, 
-  Plus, 
-  Share2,
-  AlertCircle
+  Play, Star, Clock, Calendar, ArrowLeft, Plus, Share2, AlertCircle, Loader2
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { fetchMovieDetails, getImageUrl } from '@/lib/tmdb';
 import { Button } from '@/components/ui/button';
 
+// Ordered list of servers to try - auto-selects the first working one
+const getServers = (type: string, id: string, season?: number, episode?: number) => {
+  const isTv = type === 'tv';
+  return [
+    {
+      name: 'Primary',
+      url: isTv 
+        ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+        : `https://vidsrc.xyz/embed/movie?tmdb=${id}`,
+    },
+    {
+      name: 'Backup 1',
+      url: isTv
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${season}&e=${episode}`
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    },
+    {
+      name: 'Backup 2',
+      url: isTv
+        ? `https://embed.su/embed/tv/${id}/${season}/${episode}`
+        : `https://embed.su/embed/movie/${id}`,
+    },
+  ];
+};
+
 const WatchPage = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [streamError, setStreamError] = useState(false);
+  const [currentServerIndex, setCurrentServerIndex] = useState(0);
+  const [isLoadingStream, setIsLoadingStream] = useState(true);
+  const [allFailed, setAllFailed] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const { data: movie, isLoading } = useQuery({
     queryKey: ['movie', type, id],
@@ -28,18 +49,32 @@ const WatchPage = () => {
     enabled: !!id,
   });
 
-  // Auto-select best working server - using vidsrc.to as primary
-  const getStreamUrl = () => {
-    if (type === 'tv') {
-      return `https://vidsrc.to/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`;
-    }
-    return `https://vidsrc.to/embed/movie/${id}`;
-  };
+  const servers = getServers(type || 'movie', id || '', selectedSeason, selectedEpisode);
 
-  // Reset error on content change
+  // Reset on content change
   useEffect(() => {
-    setStreamError(false);
+    setCurrentServerIndex(0);
+    setIsLoadingStream(true);
+    setAllFailed(false);
   }, [id, selectedSeason, selectedEpisode]);
+
+  // Auto-advance to next server after timeout
+  useEffect(() => {
+    if (allFailed) return;
+    const timeout = setTimeout(() => {
+      if (isLoadingStream && currentServerIndex < servers.length - 1) {
+        setCurrentServerIndex(prev => prev + 1);
+      } else if (isLoadingStream) {
+        setAllFailed(true);
+        setIsLoadingStream(false);
+      }
+    }, 8000); // 8 seconds per server attempt
+    return () => clearTimeout(timeout);
+  }, [currentServerIndex, isLoadingStream, allFailed, servers.length]);
+
+  const handleIframeLoad = () => {
+    setIsLoadingStream(false);
+  };
 
   if (isLoading) {
     return (
@@ -58,9 +93,7 @@ const WatchPage = () => {
         <Navbar />
         <div className="pt-24 text-center py-20">
           <h1 className="text-2xl font-bold text-foreground">Content not found</h1>
-          <Link to="/" className="text-primary hover:underline mt-4 inline-block">
-            Go back home
-          </Link>
+          <Link to="/" className="text-primary hover:underline mt-4 inline-block">Go back home</Link>
         </div>
       </div>
     );
@@ -78,59 +111,53 @@ const WatchPage = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Background */}
       <div className="relative pt-16">
         {backdropUrl && (
           <div className="absolute inset-0 h-[500px]">
-            <img
-              src={backdropUrl}
-              alt={title}
-              className="w-full h-full object-cover opacity-15"
-            />
+            <img src={backdropUrl} alt={title} className="w-full h-full object-cover opacity-15" />
             <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
           </div>
         )}
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 pt-8">
-          {/* Back Button */}
-          <Link 
-            to="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Browse
+          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" /> Back to Browse
           </Link>
 
           {/* Video Player */}
           <div className="glass-card overflow-hidden mb-8">
             <div className="aspect-video bg-card relative">
-              {streamError ? (
+              {allFailed ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                   <AlertCircle className="w-16 h-16 text-muted-foreground mb-4" />
                   <h3 className="text-xl font-semibold text-foreground mb-2">Stream Unavailable</h3>
-                  <p className="text-muted-foreground mb-4">This content is currently unavailable. Please try again later.</p>
+                  <p className="text-muted-foreground mb-4">All servers are currently unavailable. Please try again later.</p>
                   {trailer && (
-                    <a
-                      href={`https://www.youtube.com/watch?v=${trailer.key}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={`https://www.youtube.com/watch?v=${trailer.key}`} target="_blank" rel="noopener noreferrer">
                       <Button className="btn-primary gap-2">
-                        <Play className="w-4 h-4" />
-                        Watch Trailer Instead
+                        <Play className="w-4 h-4" /> Watch Trailer Instead
                       </Button>
                     </a>
                   )}
                 </div>
               ) : (
-                <iframe
-                  src={getStreamUrl()}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media; fullscreen"
-                  title={title}
-                  onError={() => setStreamError(true)}
-                />
+                <>
+                  {isLoadingStream && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card">
+                      <Loader2 className="w-10 h-10 text-primary animate-spin mb-3" />
+                      <p className="text-sm text-muted-foreground">Finding best server...</p>
+                    </div>
+                  )}
+                  <iframe
+                    ref={iframeRef}
+                    src={servers[currentServerIndex]?.url}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; encrypted-media; fullscreen"
+                    title={title}
+                    onLoad={handleIframeLoad}
+                  />
+                </>
               )}
             </div>
 
@@ -145,9 +172,7 @@ const WatchPage = () => {
                     className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
                   >
                     {Array.from({ length: movie.number_of_seasons }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        Season {i + 1}
-                      </option>
+                      <option key={i + 1} value={i + 1}>Season {i + 1}</option>
                     ))}
                   </select>
                 </div>
@@ -159,9 +184,7 @@ const WatchPage = () => {
                     className="bg-secondary text-foreground px-3 py-2 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary"
                   >
                     {Array.from({ length: 24 }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        Episode {i + 1}
-                      </option>
+                      <option key={i + 1} value={i + 1}>Episode {i + 1}</option>
                     ))}
                   </select>
                 </div>
@@ -171,14 +194,9 @@ const WatchPage = () => {
 
           {/* Movie Info */}
           <div className="grid lg:grid-cols-[280px_1fr] gap-8 pb-12">
-            {/* Poster */}
             <div className="hidden lg:block">
               {posterUrl ? (
-                <img
-                  src={posterUrl}
-                  alt={title}
-                  className="w-full rounded-xl shadow-2xl"
-                />
+                <img src={posterUrl} alt={title} className="w-full rounded-xl shadow-2xl" />
               ) : (
                 <div className="aspect-[2/3] bg-secondary rounded-xl flex items-center justify-center">
                   <Play className="w-16 h-16 text-muted-foreground" />
@@ -186,36 +204,24 @@ const WatchPage = () => {
               )}
             </div>
 
-            {/* Details */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">
-                {title}
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">{title}</h1>
+              {movie.tagline && <p className="text-lg text-muted-foreground italic mb-4">"{movie.tagline}"</p>}
 
-              {movie.tagline && (
-                <p className="text-lg text-muted-foreground italic mb-4">
-                  "{movie.tagline}"
-                </p>
-              )}
-
-              {/* Meta Info */}
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 {rating && rating !== '0.0' && (
                   <span className="flex items-center gap-1.5 bg-primary/20 text-primary px-3 py-1.5 rounded-full text-sm font-medium">
-                    <Star className="w-4 h-4 fill-current" />
-                    {rating}
+                    <Star className="w-4 h-4 fill-current" /> {rating}
                   </span>
                 )}
                 {releaseYear && (
                   <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {releaseYear}
+                    <Calendar className="w-4 h-4" /> {releaseYear}
                   </span>
                 )}
                 {runtime && (
                   <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                    <Clock className="w-4 h-4" />
-                    {runtime}
+                    <Clock className="w-4 h-4" /> {runtime}
                   </span>
                 )}
                 {type === 'tv' && movie.number_of_seasons && (
@@ -225,50 +231,28 @@ const WatchPage = () => {
                 )}
               </div>
 
-              {/* Genres */}
               {movie.genres && movie.genres.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {movie.genres.map((genre) => (
-                    <span
-                      key={genre.id}
-                      className="px-3 py-1 bg-secondary text-muted-foreground rounded-full text-sm"
-                    >
+                    <span key={genre.id} className="px-3 py-1 bg-secondary text-muted-foreground rounded-full text-sm">
                       {genre.name}
                     </span>
                   ))}
                 </div>
               )}
 
-              {/* Overview */}
-              <p className="text-muted-foreground leading-relaxed mb-8">
-                {movie.overview}
-              </p>
+              <p className="text-muted-foreground leading-relaxed mb-8">{movie.overview}</p>
 
-              {/* Actions */}
               <div className="flex flex-wrap gap-3 mb-8">
-                <Button className="btn-secondary gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add to List
-                </Button>
-                <Button className="btn-secondary gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
+                <Button className="btn-secondary gap-2"><Plus className="w-4 h-4" /> Add to List</Button>
+                <Button className="btn-secondary gap-2"><Share2 className="w-4 h-4" /> Share</Button>
                 {trailer && (
-                  <a
-                    href={`https://www.youtube.com/watch?v=${trailer.key}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="btn-secondary gap-2">
-                      <Play className="w-4 h-4" />
-                      Trailer
-                    </Button>
+                  <a href={`https://www.youtube.com/watch?v=${trailer.key}`} target="_blank" rel="noopener noreferrer">
+                    <Button className="btn-secondary gap-2"><Play className="w-4 h-4" /> Trailer</Button>
                   </a>
                 )}
               </div>
 
-              {/* Cast */}
               {movie.credits?.cast && movie.credits.cast.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Cast</h3>
@@ -276,11 +260,7 @@ const WatchPage = () => {
                     {movie.credits.cast.slice(0, 6).map((actor) => (
                       <div key={actor.id} className="flex items-center gap-2 bg-secondary/50 rounded-full pr-4">
                         {actor.profile_path ? (
-                          <img
-                            src={getImageUrl(actor.profile_path, 'w200')!}
-                            alt={actor.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
+                          <img src={getImageUrl(actor.profile_path, 'w200')!} alt={actor.name} className="w-10 h-10 rounded-full object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-sm font-medium">
                             {actor.name.charAt(0)}

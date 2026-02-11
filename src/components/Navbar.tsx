@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, User, Bell } from 'lucide-react';
+import { Search, Menu, X, User, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import AuthModal from './AuthModal';
 import Logo from './Logo';
 
@@ -11,6 +12,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +34,8 @@ const Navbar = () => {
     <>
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
-          {/* Logo */}
           <Logo />
 
-          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
@@ -48,9 +48,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-4">
-            {/* Search Bar */}
             <form onSubmit={handleSearch} className="hidden md:flex">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -73,22 +71,31 @@ const Navbar = () => {
               <Search className="w-5 h-5" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:flex text-muted-foreground hover:text-foreground"
-            >
-              <Bell className="w-5 h-5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsAuthOpen(true)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <User className="w-5 h-5" />
-            </Button>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[120px]">
+                  {user.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={signOut}
+                  className="text-muted-foreground hover:text-foreground"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsAuthOpen(true)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <User className="w-5 h-5" />
+              </Button>
+            )}
 
             <Button
               variant="ghost"
@@ -101,7 +108,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-white/5 animate-slide-up">
             <div className="px-4 py-6 space-y-4">
