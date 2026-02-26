@@ -11,6 +11,9 @@ import MoviesPage from "./pages/MoviesPage";
 import TVPage from "./pages/TVPage";
 import MyListPage from "./pages/MyListPage";
 import NotFound from "./pages/NotFound";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import DMCAPage from "./pages/DMCAPage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,9 @@ const App = () => (
             <Route path="/movies" element={<MoviesPage />} />
             <Route path="/tv" element={<TVPage />} />
             <Route path="/my-list" element={<MyListPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/dmca" element={<DMCAPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
