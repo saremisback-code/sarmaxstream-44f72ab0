@@ -16,20 +16,20 @@ const getServers = (type: string, id: string, season?: number, episode?: number)
     {
       name: 'Primary',
       url: isTv 
-        ? `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
-        : `https://vidsrc.me/embed/movie?tmdb=${id}`,
+        ? `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
+        : `https://vidsrc.cc/v2/embed/movie/${id}`,
     },
     {
       name: 'Backup 1',
       url: isTv
-        ? `https://embed.su/embed/tv/${id}/${season}/${episode}`
-        : `https://embed.su/embed/movie/${id}`,
+        ? `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+        : `https://vidsrc.me/embed/movie?tmdb=${id}`,
     },
     {
       name: 'Backup 2',
       url: isTv
-        ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
-        : `https://vidsrc.xyz/embed/movie?tmdb=${id}`,
+        ? `https://vidsrc.icu/embed/tv/${id}/${season}/${episode}`
+        : `https://vidsrc.icu/embed/movie/${id}`,
     },
   ];
 };
