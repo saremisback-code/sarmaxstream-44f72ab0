@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Star, Plus, Info } from 'lucide-react';
+import { Play, Star } from 'lucide-react';
 import { Movie, getImageUrl } from '@/lib/tmdb';
 
 interface MovieCardProps {
@@ -22,22 +22,17 @@ const MovieCard = ({ movie, index = 0 }: MovieCardProps) => {
     <Link 
       to={`/watch/${mediaType}/${movie.id}`}
       className="movie-card group block"
-      style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="relative aspect-[2/3] bg-secondary overflow-hidden rounded-xl">
-        {/* Skeleton loader */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-secondary animate-pulse">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
-          </div>
+          <div className="absolute inset-0 bg-secondary animate-pulse" />
         )}
         
-        {/* Poster Image */}
         {posterUrl && !imageError ? (
           <img
             src={posterUrl}
             alt={title}
-            className={`w-full h-full object-cover transition-all duration-500 ${
+            className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setImageLoaded(true)}
@@ -51,60 +46,46 @@ const MovieCard = ({ movie, index = 0 }: MovieCardProps) => {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-lg font-semibold text-foreground line-clamp-2 mb-2">
-              {title}
-            </h3>
-            
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
-              {releaseYear && <span>{releaseYear}</span>}
-              {rating && rating !== '0.0' && (
-                <span className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  {rating}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                <Play className="w-4 h-4 fill-current" />
-                <span className="text-sm font-medium">Watch</span>
-              </button>
-              <button className="p-2 bg-secondary/80 hover:bg-secondary text-foreground rounded-lg transition-colors">
-                <Plus className="w-4 h-4" />
-              </button>
-              <button className="p-2 bg-secondary/80 hover:bg-secondary text-foreground rounded-lg transition-colors">
-                <Info className="w-4 h-4" />
-              </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-4">
+          <div className="w-full">
+            <h3 className="text-sm font-semibold text-foreground line-clamp-2 mb-2">{title}</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {releaseYear && <span>{releaseYear}</span>}
+                {rating && rating !== '0.0' && (
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-primary fill-primary" /> {rating}
+                  </span>
+                )}
+              </div>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <Play className="w-3.5 h-3.5 text-primary-foreground fill-current" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Rating Badge */}
         {rating && rating !== '0.0' && (
-          <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 group-hover:opacity-0 transition-opacity">
-            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs font-semibold text-foreground">{rating}</span>
+          <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-1 group-hover:opacity-0 transition-opacity">
+            <Star className="w-3 h-3 text-primary fill-primary" />
+            <span className="text-[11px] font-semibold text-foreground">{rating}</span>
           </div>
         )}
 
-        {/* Media Type Badge */}
         {mediaType === 'tv' && (
-          <div className="absolute top-3 right-3 bg-primary/90 backdrop-blur-sm px-2 py-1 rounded-md">
-            <span className="text-xs font-semibold text-primary-foreground">TV</span>
+          <div className="absolute top-2 right-2 bg-primary/90 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-bold text-primary-foreground">TV</span>
           </div>
         )}
       </div>
 
-      {/* Title below card */}
-      <div className="mt-3 px-1">
-        <h3 className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+      <div className="mt-2 px-0.5">
+        <h3 className="text-xs font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {releaseYear} {rating && rating !== '0.0' && `• ⭐ ${rating}`}
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          {releaseYear}
         </p>
       </div>
     </Link>
