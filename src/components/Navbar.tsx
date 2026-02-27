@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import AuthModal from './AuthModal';
 import Logo from './Logo';
+import { sanitizeSearchQuery } from '@/lib/tmdb';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,7 +57,7 @@ const Navbar = () => {
                   type="text"
                   placeholder="Search movies..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => setSearchQuery(sanitizeSearchQuery(e.target.value))}
                   className="search-input w-48 lg:w-64 pl-10 pr-4 text-sm"
                 />
               </div>

@@ -1,5 +1,5 @@
 // TMDB API Configuration
-const TMDB_API_KEY = '2dca580c2a14b55200e784d157207b4d'; // Public demo key
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
@@ -101,9 +101,15 @@ export const fetchMovieDetails = async (id: number, type: 'movie' | 'tv' = 'movi
   return data;
 };
 
+export const sanitizeSearchQuery = (query: string): string => {
+  return query.trim().slice(0, 100);
+};
+
 export const searchMovies = async (query: string): Promise<Movie[]> => {
+  const sanitized = sanitizeSearchQuery(query);
+  if (!sanitized) return [];
   const response = await fetch(
-    `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
+    `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(sanitized)}`
   );
   const data = await response.json();
   return data.results.filter((item: Movie) => 

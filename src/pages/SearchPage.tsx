@@ -5,7 +5,7 @@ import { Search as SearchIcon, Film, Tv } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import MovieCard from '@/components/MovieCard';
-import { searchMovies, Movie } from '@/lib/tmdb';
+import { searchMovies, sanitizeSearchQuery, Movie } from '@/lib/tmdb';
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,7 +55,7 @@ const SearchPage = () => {
               type="text"
               placeholder="Search for movies, TV shows..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => setQuery(sanitizeSearchQuery(e.target.value))}
               className="search-input w-full pl-14 pr-6 py-4 text-lg"
               autoFocus
             />
