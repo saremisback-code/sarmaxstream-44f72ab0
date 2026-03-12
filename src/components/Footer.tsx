@@ -41,7 +41,7 @@ const Footer = () => {
 
         <div className="pt-6 border-t border-white/5 space-y-3 text-center">
           <p className="text-[11px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            <strong className="text-foreground">Disclaimer:</strong> SarmaxStream does not host, store, or upload any video files. All content is provided by non-affiliated third-party sources. We are a search engine that indexes publicly available links. If you believe any content infringes your copyright, please visit our <Link to="/dmca" className="text-primary hover:underline">DMCA page</Link>.
+            <strong className="text-foreground">Disclaimer:</strong> SARMAX does not host, store, or upload any video files. All content is provided by non-affiliated third-party sources. We are a search engine that indexes publicly available links. If you believe any content infringes your copyright, please visit our <Link to="/dmca" className="text-primary hover:underline">DMCA page</Link>.
           </p>
           <div className="flex flex-wrap justify-center gap-3 text-[11px] text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
@@ -51,7 +51,7 @@ const Footer = () => {
             <Link to="/dmca" className="hover:text-foreground transition-colors">DMCA</Link>
           </div>
           <p className="text-[11px] text-muted-foreground/60">
-            © {new Date().getFullYear()} SarmaxStream. All rights reserved.
+            © {new Date().getFullYear()} SARMAX. All rights reserved.
           </p>
         </div>
       </div>
