@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import DMCAPage from "./pages/DMCAPage";
+import AuthConfirmPage from "./pages/AuthConfirmPage";
 
 const queryClient = new QueryClient();
 
