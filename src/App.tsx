@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import DMCAPage from "./pages/DMCAPage";
+import AuthConfirmPage from "./pages/AuthConfirmPage";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/dmca" element={<DMCAPage />} />
+            <Route path="/auth/confirm" element={<AuthConfirmPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
